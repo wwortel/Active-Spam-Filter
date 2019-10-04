@@ -314,7 +314,6 @@ class AskMail:
 			lbatt_body = batt_body.split(b'\n')
 			## We only send max_attach_lines (if not -1)
 			lines = len(lbatt_body)
-			self.log.write(1, "body line number: {0} max to be shown: {1}".format( lines, max_attach_lines ))
 
 			if html_mail:
 				asc("<pre>\n")

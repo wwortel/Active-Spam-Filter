@@ -339,6 +339,7 @@ class AskMessage:
 			sdata = fh.read().decode('latin1')
 			fh.close()
 
+			## cycle through white/ignore list lines
 			for entry in sdata.split('\n'):
 				buf = entry.rstrip().lower()
 
@@ -353,9 +354,10 @@ class AskMessage:
 				## "subject re" matches subject
 				## "header re"  matches a full regexp in the headers
 				## "re"         matches sender (previous behavior)
-				strlist = []
 
-				## from
+				## find lines list entry category (from, to, subject, header) 
+				strlist = []
+				## FROM
 				res = re.match("from\s*(.*)", buf, re.IGNORECASE)
 				if res:
 					## No blank 'from'
@@ -384,8 +386,10 @@ class AskMessage:
 							res = re.match("header\s*(.*)", buf, re.IGNORECASE)
 							if res:
 								regex = res.group(1)
-								for key in self.email_obj.keys():
-									strlist.extend( key + ': ' + self.email_obj.get(key) )
+								for hdr in self.email_obj.items():
+									## reduce multi-line headers to just the first line
+									parts = hdr[1].split('\n')
+									strlist.append( hdr[0] + ': ' + parts[0] )
 							else:
 								regex = self.__regex_adjust(buf)
 								strlist.append(sender)
