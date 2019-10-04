@@ -8,5 +8,5 @@ Example .procmailrc line:
 :0 fW
 |/usr/bin/askfilter --procmail --loglevel=1 --logfile=\<log path/\>ask.log --home=\<user path/\>\<user name\>
   
-a reference .askrc is given in the templates folder and needs a version for every email user in that user's ask directory.
+a reference .askrc is given in the templates folder and needs a version for every email user in that user's home directory.
 See Marco Paganini's original instructions about the installation.
