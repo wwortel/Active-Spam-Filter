@@ -18,3 +18,10 @@ General criticism against this type of 'confirm to my request to reply before an
 In practice this cascaded arrangement pretty much cleans the inbox from any spam.
 
 Keywords: spam, anti-spam, milter, email filter 
+
+DONATIONS
+---------
+
+Donations are accepted:
+- BTC: 1LkzWBvy847UNvAcJHjMJJbpHcNY8VnTL
+Thank you!
