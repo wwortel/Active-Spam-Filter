@@ -249,6 +249,8 @@ class AskMessage:
 		for stuple in subject:
 			if stuple:
 				if stuple[1] == None:
+					# no encoding can result in string type or bytes type.
+					# when bytes, decode it to string (utf-8 in Python3)
 					if type(stuple[0]) == type(b''):
 						decoded += str( stuple[0], 'utf-8')
 					if type(stuple[0]) == type(''):
