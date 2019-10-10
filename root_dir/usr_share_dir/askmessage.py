@@ -126,7 +126,8 @@ class AskMessage:
 			rx_orig = rx_obj.read()
 			rx_obj.close()
 
-		rx_hdrs , rx_body = rx_orig.split(b'\n\n', maxsplit=1)
+		rx_lnx = rx_orig.replace(b'\r\n', b'\n')
+		rx_hdrs , rx_body = rx_lnx.split(b'\n\n', maxsplit=1)
 		## Remove X-ASK-Action headers
 		## exactly one newline char at the end (it might be followed by an empty line signalling body start) 
 		rx_hdrs = re.sub(b'X-ASK-Action:.*\w\x0a{1}?', b'',rx_hdrs)
@@ -214,26 +215,22 @@ class AskMessage:
 	#----------------------------------------------------------------------------------
 	def get_recipients(self):
 		"""
-		Returns a list of tuples in the format (sender_name, sender_email). Note that
+		Returns a list of tuples in the format (sender_name, sender_email, sender_header). Note that
 		the list includes the contents of the TO, CC and BCC fields.
 		"""
 
 		## Master list of recipients
 		recipients = []
-
-		to_list = [ self.email_obj.get("To") ]		## To:
-		if to_list:
-			for item in to_list:
-				recipients.append( self.decode_address(item) )
-		cc_list  = [ self.email_obj.get("Cc") ]		## Cc:
-		if cc_list:
-			for item in cc_list:
-				recipients.append( self.decode_address(item) )
-		bcc_list = [ self.email_obj.get("Bcc") ]	## Bcc:
-		if bcc_list:
-			for item in bcc_list:
-				recipients.append( self.decode_address(item) )
-
+		for hdr in [ 'To' , 'Cc', 'Bcc' ]:
+			hdr_str = self.email_obj.get(hdr)
+			if hdr_str:
+				hdr_str = hdr_str.replace('\n', '')
+				hdr_str = hdr_str.replace('>,', '>|#&')
+				hdr_str = hdr_str.split('|#&')
+				for addr in hdr_str:
+					name = self.decode_address(addr)[0]
+					address = self.decode_address(addr)[1]
+					recipients.append( ( name , address, hdr ) )
 		return(recipients)
 
 	#----------------------------------------------------------------------------------
@@ -249,8 +246,6 @@ class AskMessage:
 		for stuple in subject:
 			if stuple:
 				if stuple[1] == None:
-					# no encoding can result in string type or bytes type.
-					# when bytes, decode it to string (utf-8 in Python3)
 					if type(stuple[0]) == type(b''):
 						decoded += str( stuple[0], 'utf-8')
 					if type(stuple[0]) == type(''):
@@ -331,7 +326,7 @@ class AskMessage:
 		for fname in filenames:
 
 			## If the file does not exist, ignore
-			self.log.write(5, "  __inlist(): filename=%s, sender=%s, dest=%s, subject=%s"% (fname, sender, recipients, subj))
+			self.log.write(5, "  __inlist(): filename=%s, sender=%s, dest=%s, subject=%s"% (fname, sender, repr(recipients), subj))
 
 			if (os.access(fname, os.R_OK) == 0):
 				self.log.write(5, "  __inlist(): %s does not exist (or is unreadable). Ignoring..." % fname)
@@ -374,7 +369,7 @@ class AskMessage:
 					if res:
 						regex = self.__regex_adjust(res.group(1))
 						## Append all recipients
-						for (recipient_name, recipient_email) in recipients:
+						for (recipient_name, recipient_email, recip_hdr) in recipients:
 							strlist.append(recipient_email)
 					else:
 						## subject
@@ -945,7 +940,7 @@ class AskMessage:
 		## Do not add if it's already there... (Compare sender only)
 		if self.__inlist(filenames,
 						 sender     = email,
-						 recipients = [("*IGNORE*","*IGNORE*")],
+						 recipients = [("*IGNORE*","*IGNORE*","*IGNORE*")],
 						 subj       = "*IGNORE*"):
 			self.log.write(1, "  __add_to_list(): \"%s\" is already present in \"%s\". It will not be re-added" % (email, filenames[0]))
 			return -1
@@ -1315,7 +1310,7 @@ class AskMessage:
 		returned. Otherwise, it returns None.
 		"""
 
-		for (recipient_name, recipient_mail) in self.get_recipients():
+		for (recipient_name, recipient_mail, recip_hdr) in self.get_recipients():
 			for our_address in self.config.rc_mymails:
 				if recipient_mail.lower() == our_address:
 					self.log.write(1, "  match_recipient(): Found a match with %s" % our_address)

@@ -100,8 +100,9 @@ class AskMain:
 
 		self.log.write(1, "Message from:    %s <%s>" % self.msg.get_sender())
 
-		for (recipient_name, recipient_mail) in self.msg.get_recipients():
-			self.log.write(1, "Message to:      %s <%s>"  % (recipient_name, recipient_mail))
+		for (recipient_name, recipient_mail, recip_hdr) in self.msg.get_recipients():
+			if len(recipient_mail) > 0:
+				self.log.write(1, "Message %s:      %s <%s>"  % (recip_hdr, recipient_name, recipient_mail))
 
 		self.log.write( 1, "Message Subject: %s" % self.msg.get_subject() )
 
@@ -170,13 +171,15 @@ class AskMain:
 						self.msg.deliver_mail("Whitelist match [%s]" % self.msg.list_match)
 						return(self.config.RET_PROCMAIL_CONTINUE)
 					else:
-						self.log.write(1, "Not matched in the whitelist")
+						self.log.write(1, "Not matched in the whitelists")
 
 		## People in ignorelist are just thrown into the void...
 		if self.msg.is_in_ignorelist():
 			self.log.write(1, "Ignorelist Match. Throwing message away...")
 			self.msg.discard_mail()
-			return(self.config.RET_PROCMAIL_STOP)					
+			return(self.config.RET_PROCMAIL_STOP)
+		else:
+			self.log.write(1, "Not matched in the ignorelist")					
 
 		## Auth:
 		## - MD5 matches, Time matches:  Definitely sent by US. Deliver to mailbox

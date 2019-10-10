@@ -261,7 +261,8 @@ class AskMail:
 			batt_tot = att_fh.read()
 			att_fh.close()
 
-			batt_hdrs , batt_body = batt_tot.split(b'\n\n', maxsplit=1)
+			batt_lnx = batt_tot.replace(b'\r\n', b'\n')
+			batt_hdrs , batt_body = batt_lnx.split(b'\n\n', maxsplit=1)
 
 			## parse HEADERS and only keep basic ones
 
