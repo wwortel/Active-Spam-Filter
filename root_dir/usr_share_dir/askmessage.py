@@ -238,12 +238,21 @@ class AskMessage:
 		"""
 		Returns the subject of the message, or '' if none is defined, as utf-8 encoded string.
 		Only primary subject section is used and decoded via its detected encoding.
+		email_obj.get returns None if the header is not found.
+		decode_header returns a list of (decoded_string, charset) pairs.
+		charset is None for non-encoded parts of the header.
 		"""
-
-		subject = decode_header(self.email_obj.get("Subject"))
+		subject_h = self.email_obj.get("Subject")
+		if subject_h == None:
+			return 'no Subject found'
+		
+		subject_tl = decode_header(subject_h)
 		decoded = ''
 
-		for stuple in subject:
+		"""
+		Now cycle through the tuples and decode them if needed
+		"""
+		for stuple in subject_tl:
 			if stuple:
 				if stuple[1] == None:
 					if type(stuple[0]) == type(b''):
@@ -383,10 +392,21 @@ class AskMessage:
 							res = re.match("header\s*(.*)", buf, re.IGNORECASE)
 							if res:
 								regex = res.group(1)
+								match = re.search("^.*:",regex, re.IGNORECASE)
+								## get matching part and strip ':'
+								hdrname = re.sub(":", "", match.group())
 								for hdr in self.email_obj.items():
-									## reduce multi-line headers to just the first line
-									parts = hdr[1].split('\n')
-									strlist.append( hdr[0] + ': ' + parts[0] )
+									if ( hdrname == hdr[0].lower() ):  									
+										## reduce multi-line headers to the concatenation of the first two lines
+										## test whether multi line
+										parts = hdr[1].split('\n')
+										partsn = len(parts)
+										if (partsn > 1):
+											strlist.append( hdr[0] + ': ' + parts[0] + " " + parts[1] )
+										else:
+											strlist.append( hdr[0] + ': ' + parts[0] )
+									else:
+										continue
 							else:
 								regex = self.__regex_adjust(buf)
 								strlist.append(sender)
