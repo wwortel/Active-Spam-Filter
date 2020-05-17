@@ -260,7 +260,10 @@ class AskMessage:
 					if type(stuple[0]) == type(''):
 						decoded += stuple[0]
 				else:
-					decoded += str( stuple[0], stuple[1])
+					try:
+						decoded += str( stuple[0], stuple[1])
+					except:
+						decoded += '<undecoded subject element>'
 		
 		return(decoded)
 
