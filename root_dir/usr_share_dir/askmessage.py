@@ -199,15 +199,70 @@ class AskMessage:
 		are not checked.
 		"""
 
-		headers = ["X-Primary-Address", "Resent-From", "Reply-To", "From"];
+		headers = ["From", "Reply-To", "Resent-From", "X-Primary-Address"];
+		
+		deb = 0
 
 		## Remove unwanted headers
 		def fn_remove(x, y = ignore_header): return(x != y)
 		headers = filter(fn_remove, headers)
 
 		for hdr in headers:
-			(sender_name, sender_mail) = self.decode_address(self.email_obj.get(hdr))
-			if sender_mail and sender_name:
+			hstr = self.email_obj.get(hdr)
+			if hstr is None:
+				continue
+			# hstr type: <class 'email.header.Header'>
+			h_dcd = decode_header(hstr)
+			if (len(h_dcd) == 2): # two line header, name line #1, email line #2
+				# name
+				name_t = h_dcd[0] # tuples
+				if isinstance(name_t[0], (bytes, bytearray)):
+					sender_name = name_t[0].decode('utf-8', 'backslashreplace')
+					if (deb):
+						self.log.write(7, "sender_name b/ba %s" % sender_name)
+				elif isinstance(name_t[0], str):
+					sender_name = name_t[0]
+					if (deb):
+						self.log.write(7, "sender_name str %s" % sender_name)
+				else:
+					sender_name = "placeholder"
+					if (deb):
+						self.log.write(7, "sender_name %s" % sender_name)
+				#mail
+				mail_t = h_dcd[1]
+				if isinstance(mail_t[0], (bytes, bytearray)):
+					sender_mail = mail_t[0].decode('utf-8', 'backslashreplace')
+					sender_mail = re.sub('[<> ]','',sender_mail)
+					if (deb):
+						self.log.write(7, "sender_mail b/ba %s" % sender_mail)
+				elif isinstance(mail_t[0], str):
+					sender_mail = mail_t[0]
+					sender_mail = re.sub('[<> ]','',sender_mail)
+					if (deb):
+						self.log.write(7, "sender_mail str %s" % sender_mail)
+				else:
+					sender_mail = "placeholder@placeholder.com"
+					if (deb):
+						self.log.write(7, "sender_mail %s" % sender_mail)
+			else: # single line
+				combi_t = h_dcd[0]
+				if isinstance(combi_t[0], (bytes, bytearray)):
+					combi_u = combi_t[0].decode('utf-8', 'backslashreplace')
+					if (deb):
+						self.log.write(7, "combi_u b/ba %s" % combi_u)
+				elif isinstance(combi_t[0], str):
+					combi_u = combi_t[0]
+					if (deb):
+						self.log.write(7, "combi_u str %s" % combi_u)
+				(sender_name, sender_mail) = self.decode_address(combi_u)
+				if not sender_name:
+					sender_name = "placeholder"
+				if not sender_mail:
+					sender_mail = "placeholder@placeholder.com"
+     
+			if sender_name and sender_mail:
+				if (deb):
+					self.log.write(7, "sender_name: %s, sender_mail: %s, type %s type %s" % (sender_name, sender_mail, type(sender_name), type(sender_mail)))
 				break
 
 		return(sender_name.rstrip(), sender_mail.rstrip())
